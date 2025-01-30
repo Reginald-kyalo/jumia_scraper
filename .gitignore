@@ -1,0 +1,8 @@
+scrapyenv
+.scrapy
+data
+logs
+jumia/__pycache__
+jumia/spiders/__pycache__
+*.cpython*
+*.pyc

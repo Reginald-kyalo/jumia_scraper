@@ -1,3 +1,28 @@
+#from urllib.parse import urlencode
+#
+#class ScrapingBeeMiddleware:
+#    def __init__(self, api_key):
+#        self.api_key = api_key
+#
+#    @classmethod
+#    def from_crawler(cls, crawler, *args, **kwargs):
+#        api_key = crawler.settings.get('SCRAPINGBEE_API_KEY')
+#        return cls(api_key)
+#
+#    def process_request(self, request, spider):
+#        # Create the ScrapingAnt API URL with the request URL
+#        payload = {
+#            'api_key': os.getenv("SCRAPINGBEE_API_KEY"),
+#            'url': request.url,
+#            'render_js': 'false'
+#        }
+#        proxy_url = 'https://app.scrapingbee.com/api/v1?' + urlencode(payload)
+#        return request.replace(url=proxy_url, meta={'proxy_used': True})
+#payload = {
+#    'url': 'https://www.jumia.co.ke/catalog/?q=iphone',
+#    'x-api-key': os.getenv("SCRAPINGANT_API_KEY"),
+#}
+#proxy_url = 'https://api.scrapingant.com/v2/general?' + urlencode(payload)
 # Define here the models for your spider middleware
 #
 # See documentation in:
@@ -7,9 +32,34 @@ from scrapy import signals
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
+import logging
 
+class SpiderTimingMiddleware:
+    def __init__(self, stats):
+        self.stats = stats
+        self.logger = logging.getLogger(__name__)
 
-class AmazonSpiderMiddleware:
+    @classmethod
+    def from_crawler(cls, crawler):
+        # Create an instance of the middleware with access to stats
+        middleware = cls(crawler.stats)
+        # Connect signals
+        crawler.signals.connect(middleware.spider_opened, signal=signals.spider_opened)
+        crawler.signals.connect(middleware.spider_closed, signal=signals.spider_closed)
+        return middleware
+
+    def spider_opened(self, spider):
+        self.logger.info(f"Spider {spider.name} started.")
+
+    def spider_closed(self, spider, reason):
+        stats = self.stats.get_stats()
+        start_time = stats.get("start_time")
+        finish_time = stats.get("finish_time")
+
+        if start_time and finish_time:
+            duration = (finish_time - start_time).total_seconds()
+            self.logger.info(f"Spider {spider.name} ran for {duration:.2f} seconds. Reason: {reason}")
+class SpiderMiddleware:
     # Not all methods need to be defined. If a method is not defined,
     # scrapy acts as if the spider middleware does not modify the
     # passed objects.
@@ -56,7 +106,7 @@ class AmazonSpiderMiddleware:
         spider.logger.info('Spider opened: %s' % spider.name)
 
 
-class AmazonDownloaderMiddleware:
+class DownloaderMiddleware:
     # Not all methods need to be defined. If a method is not defined,
     # scrapy acts as if the downloader middleware does not modify the
     # passed objects.

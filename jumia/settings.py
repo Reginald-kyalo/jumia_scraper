@@ -1,38 +1,55 @@
+import os
+import time
+BOT_NAME = 'jumia'
 
-BOT_NAME = 'amazon'
-
-SPIDER_MODULES = ['amazon.spiders']
-NEWSPIDER_MODULE = 'amazon.spiders'
+SPIDER_MODULES = ['jumia.spiders']
+NEWSPIDER_MODULE = 'jumia.spiders'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
+REQUEST_FINGERPRINTER_IMPLEMENTATION = '2.7'
+SCRAPINGANT_API_KEY = os.getenv("SCRAPINGANT_API_KEY")
+SCRAPINGBEE_API_KEY = os.getenv("SCRAPINGBEE_API_KEY")
 
-SCRAPEOPS_API_KEY = '2f4b39c7-b2dc-40bf-8474-0ebf037d0092'
+LOG_LEVEL = 'DEBUG'
+LOG_ENABLED = True
+LOG_FILE = f'logs/spider_log_{time.strftime("%Y%m%d_%H%M%S")}.log'
+TELNETCONSOLE_ENABLED = True
 
-SCRAPEOPS_PROXY_ENABLED = True
-# SCRAPEOPS_PROXY_SETTINGS = {'country': 'us'}
-
-# Add In The ScrapeOps Monitoring Extension
-EXTENSIONS = {
-'scrapeops_scrapy.extension.ScrapeOpsMonitor': 500, 
+FEEDS = {
+    'data/%(name)s/%(name)s_%(time)s.jsonl': {
+        'format': 'jsonlines',
+        }
 }
 
-LOG_LEVEL = 'INFO'
-
-DOWNLOADER_MIDDLEWARES = {
-
-    ## ScrapeOps Monitor
-    'scrapeops_scrapy.middleware.retry.RetryMiddleware': 550,
-    'scrapy.downloadermiddlewares.retry.RetryMiddleware': None,
-    
-    ## Proxy Middleware
-    'scrapeops_scrapy_proxy_sdk.scrapeops_scrapy_proxy_sdk.ScrapeOpsScrapyProxySdk': 725,
+SPIDER_MIDDLEWARES = {
+    'jumia.middlewares.SpiderTimingMiddleware': 543, 
 }
+
+#DOWNLOADER_MIDDLEWARES = {
+#   'jumia.middlewares.ScrapingAntMiddleware': 543, 
+#   'jumia.middlewares.ScrapingBeeMiddleware': 543,
+#}
 
 ITEM_PIPELINES = {
-    'chocolatescraper.pipelines.DuplicatesPipeline': 100,
-    'chocolatescraper.pipelines.PriceToUSDPipeline': 200,
+    'jumia.pipelines.DuplicatesPipeline': 100,
+    'jumia.pipelines.CheckPriceAvailablity': 200,
 }
 
 # Max Concurrency On ScrapeOps Proxy Free Plan is 1 thread
-CONCURRENT_REQUESTS = 1
+
+HTTPCACHE_ENABLED = True
+HTTPCACHE_EXPIRATION_SECS = 3600  # Cache for 1 hour
+HTTPCACHE_DIR = 'httpcache'
+HTTPCACHE_IGNORE_HTTP_CODES = [500, 502, 503, 504, 400, 403, 404, 408]
+
+RETRY_ENABLED = True
+RETRY_TIMES = 2  # Limit retries to 2
+DOWNLOAD_TIMEOUT = 15  # Set a timeout of 15 seconds
+
+CONCURRENT_REQUESTS = 5
+CONCURRENT_REQUESTS_PER_DOMAIN = 5
+DOWNLOAD_DELAY = 0.25
+
+AUTOTHROTTLE_ENABLED = True
+AUTOTHROTTLE_DEBUG = True
